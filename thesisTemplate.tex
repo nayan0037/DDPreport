@@ -1,0 +1,124 @@
+\documentclass[a4paper,12pt, final]{report}
+\usepackage{graphicx}
+\usepackage{url}
+%\usepackage[nomain,acronym,xindy,toc]{glossaries} % nomain, if you define glossaries in a file, and you use \include{INP-00-glossary}
+%\makeglossaries
+%\usepackage[xindy]{imakeidx}
+%\makeindex
+%\usepackage[section]{placeins}
+\renewcommand\bibname{References}
+\usepackage[utf8]{inputenc}
+%\usepackage{algorithm2e}
+%\usepackage{wrapfig}
+\usepackage{epsfig}
+%\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref} % To Hide the box around links
+\renewcommand\bibname{References}
+%\usepackage{algorithm2e}
+\usepackage{color}
+\usepackage{textcomp}
+\usepackage{acronym}
+\usepackage[top=0.5in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage{xcolor}
+\definecolor{dark-red}{rgb}{0.4,0.15,0.15}
+\definecolor{dark-blue}{rgb}{0.15,0.15,0.4}
+\definecolor{medium-blue}{rgb}{0,0,0.5}
+
+\newcommand{\BigO}[1]{\ensuremath{\operatorname{O}\bigl(#1\bigr)}}
+\parindent 8pt
+\begin{document}
+  \thispagestyle{empty}
+  \vspace*{1cm}
+  {\centering     
+  \textbf{\LARGE THESIS TITLE}\\
+  \vspace{1.20cm}
+  %\it
+  %\vspace{.5cm}
+  %\rm
+  \textbf{\large Dual Degree Stage 1 Report}\\
+  \vspace{1cm}
+  {Submitted in partial fulfillment of the requirements}\\
+  \vspace{0.25cm}
+  {for the }\\
+  \vspace{1cm}
+  \textbf{ Dual Degree Programme}\\
+  \vspace{1.50cm}
+  {by}\\
+  \vspace{0.20cm}
+  \textbf{\large Nayan Barhate}\\
+  \vspace{0.25cm}
+  \textbf{\large (Roll No. 180070037)}\\
+  \vspace{1.8cm}
+  {Under the guidance of}\\
+  \vspace{0.20cm}
+  \textbf{\large Prof. Virendra Singh}\\
+    \vspace{0.30cm}
+  \vspace{1.450cm}
+    \begin{figure}[htb]
+    \begin{center}
+    \includegraphics[height=1.5in,width=1.5in]{iitblogo.png}
+    \end{center}
+    \end{figure}
+
+    
+  {\textbf{Department of Electrical Engineering}}\\
+  {\textbf{Indian Institute of Technology Bombay}}\\
+  {\textbf{October 2022}}
+ 
+ }
+ 
+\renewcommand{\abstractname}{Acknowledgement}
+\begin{abstract}
+I express my gratitude to my guide Prof. Virendra Singh for providing me the opportunity to work on this topic. 
+\\\\
+\\\\
+\\\\
+Nayan Barhate\\
+Electrical Engineering\\
+IIT Bombay\\\
+
+\end{abstract}
+
+
+\clearpage 
+\renewcommand{\abstractname}{Abstract} 
+\abstract{XX.
+}
+
+\tableofcontents
+  \addcontentsline{toc}{chapter}{\listfigurename}
+  \listoffigures
+%  \printglossaries
+
+%\newglossaryentry{ILP}
+%{name = ILP,
+%description = Instruction Level Parallelism}
+\chapter{Introduction}
+Hello \cite{borkar2011future}
+\section{Section}
+Hello
+\subsection{SubSection}
+Hello
+\chapter{Motivation}
+Hello
+\section{Section}
+Hello \cite{borkar2011future}
+\subsection{SubSection}
+Hello
+\bibliographystyle{ieeetr}
+\bibliography{thesisTemplate}{}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\end{document}
