@@ -88,7 +88,8 @@ crisis, rebounding from its unsuccessful attempts in 1990s due to practicality c
 which are alleviated with recent advances in 3D stacking technologies. However, it is 
 still challenging to integrate the PIM architectures with existing systems in
 a seamless manner due to two common characteristics: unconventional programming
-models for in-memory computation units and lack of ability to utilize large on-chip caches.
+models for in-memory computation units and lack of ability to utilize large
+on-chip caches.
 }
 
 \tableofcontents
@@ -102,176 +103,130 @@ models for in-memory computation units and lack of ability to utilize large on-c
 \chapter{Introduction}
 All computing systems, including cloud and server platforms, desktop computers, mobile and embedded devices, and sensors, rely heavily on main memory. It is one of the primary pillars of any computing platform, along with 1) processing elements (or computational elements), which can include CPU cores, GPU cores, accelerators, or reconfigurable devices, and 2) communication elements, which can include interconnects, network interfaces, and network processing units.
 
-A simple addition operation when replaced by an atomic addition command inside
-memory gives significant speedup(53\%) to graphs with high number of vertices(5M), but
-the same command gives us a speeddown(upto 20\%) when executed on graphs with low number
-of vertices(62K). This performance degradation is attributed to the observation
-that sometimes the data on which the command was executed is readily available in
-cache. Thus PIM is not always the panacea and the decision of 'to PIM or Not'
-needs to be handled based on the data locality of the operands.
+Processing in Memory takes advantage of the ability to implement a wide range of 
+general-purpose processing logic in the logic layer of 3D-stacked memory, as well as the 
+high internal bandwidth and low latency available between the logic layer and the memory 
+layers. This is a more general approach in which the logic implemented in the logic layer 
+can be general purpose, benefiting a wide range of applications. Multiple layers of memory
+(typically DRAM in pre-existing systems) are stacked on top of each other in a 3D-stacked
+memory. Vertical through silicon vias connect these layers together (TSVs). Thousands of 
+TSVs can be placed within a single 3D-stacked memory chip using current manufacturing process technologies.
+
+%A simple addition operation when replaced by an atomic addition command inside
+%memory gives significant speedup(53\%) to graphs with high number of vertices(5M), but
+%the same command gives us a speeddown(upto 20\%) when executed on graphs with low number
+%of vertices(62K). This performance degradation is attributed to the observation
+%that sometimes the data on which the command was executed is readily available in
+%cache. Thus PIM is not always the panacea and the decision of 'to PIM or Not'
+%needs to be handled based on the data locality of the operands.
+%\begin{figure}[h]
+%  \centering
+%  \includegraphics[width=0.8\linewidth]{pim_add.png}
+%  \caption{Performance improvement with an in-memory atomic addition operation
+%  used for the PageRank algorithm.}
+%\end{figure}
 \begin{figure}[h]
   \centering
-  \includegraphics[width=0.8\linewidth]{pim_add.png}
-  \caption{Performance improvement with an in-memory atomic addition operation
-  used for the PageRank algorithm.}
+  \includegraphics[width=0.8\linewidth]{3dmem.png}
+  \caption{High-level overview of a 3D-stacked DRAM architecture\cite{3dmem}}
 \end{figure}
 
 \chapter{Literature Survey}
-\section{PIM Enabled Instruction}
-For easier adoption of PIM, we desire little to no change in programmer's model.
-Main memory products with integrated full-fledged processors with new
-programming models may also not be available in the near future because of the
-associated design complexity and changes required across the hardware/software
-stack. Also, prior proposals do not utilize the benefits of on-chip caches and
-virtual memory. This paper overcomes these challenges by extending the ISA of
-the host processor with PIM-Enabled Instructions(PEIs)\cite{PEI_ISCA}, without chaning the
-existing programming model. 
+Processing in memory (PIM) involves adding or integrating PIM logic (e.g., accelerators,
+simple processing cores, reconfigurable logic) close to or inside the memory. 
+Many of these works place PIM logic inside the logic layer of 3D-stacked
+memories (eg. Hybrid Memory Cube or HMC)
+This PIM processing logic, which we also refer to as PIM cores or PIM engines, 
+interchangeably, can execute portions of applications (from individual instructions to 
+functions) or entire threads and applications, depending on the design of the architecture. 
+Such PIM engines have high-bandwidth and low-latency access to the memory stacks that are 
+on top of them, since the logic layer and the memory layers are connected via high-bandwidth 
+vertical connections, e.g., through-silicon vias. Systems make use of relatively simple 
+PIM engines within the logic layer to avoid data movement and thus obtain significant 
+performance and energy improvements on a wide variety of application domains.
+
+\section{Coarse-Grained Application-Level PIM offload}
+
+In coarse grained application PIM offload an entire application is re-written to
+completely execute on the PIM substrate. In such a coarse-grained
+(i.e., application-granularity) approach,  specialised
+programming model and specialised architecture/hardware are required. Large-scale graph
+processing is a popular application coarse grained PIM offload. Because of (1) large amounts of
+random memory accesses across large memory regions and (2) very small amounts
+of computation per data item fetched from memory. Thus graph analysis workloads are
+known to put significant strain on memory bandwidth.
+
+Tesseract\cite{tesseract} is an example of a coarse-grained application level PIM accelerator.
+Tesseract consists of (1) a new hardware architecture that effectively uses the
+available memory bandwidth in 3D-stacked memory by placing simple in-order
+processing cores in the logic layer and allowing each core to manipulate data
+only on the memory partition it is assigned to control, and (2) an efficient
+method of communication between different in-order cores within a 3D-stacked
+memory that allows each core to request computation on data elements that
+reside in the memory partition it is assigned to control.
 
 
-The paper proposes simple ISA extensions and the architectural support required
-to integrate such simple operations into conventional systems.
-The architecture proposes a restriction on the memory region accessible by
-a single PIM operation is limited to a single last-level cache block. This
-ensures the data can be accessed by the same vertical link and simplifies the
-locality profiling.
+Rather than moving data elements across different memory partitions and cores,
+the Tesseract design moves functions (i.e., computations and temporary values)
+to data that is to be updated. It also includes two hardware prefetchers
+specialised for graph processing memory access patterns, which operate based on
+hints provided by programming model. 
+Tesseract PIM architecture improves average system
+performance by 13.8x and achieves an 87\% average energy reduction over conventional systems.
 
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.8\linewidth]{PEI.png}
-  \caption{Overview of the proposed architecture.}
-\end{figure}
+Application can also be offloaded by considering qualitative benefits of PIM such as
 
-\subsection{PIM Compute Unit(PCU)}
-PCU is a hardware unit that executes PEIs. All PCUs in the system have the same
-computation logic so that any PEI can be executed by any PCU. In the proposed
-architecture one PCU is placed besides every core in the host processor and one
-PCU is placed in every vault. PCU has a SRAM based operand buffer to store
-information of in-flight PEIs. 
+parralelizability\cite{inmemmap51}, reduced memory
+latency\cite{pointerchasing32}, 
+bandwidth savings\cite{tom31}, energy efficiency\cite{energyefficient40}, thermal 
+constraints\cite{coolpim47}, and workload characteristics\cite{fafnir12}.  
 
-\subsection{PIM Management Unit(PMU)}
-The function of PMU is to 
-\begin{itemize}
-  \setlength\itemsep{0em}
-    \item Ensure atomicity among different PEIs
-    \item Maintain cache coherancy between memory and cache during PIM
-      operation
-    \item Profile data locality for locality aware execution
-\end{itemize}
+\section{Fine-Grained Instruction-Level PIM offload}
+With Fine grained approach,
+individual instructions can be offloaded to the PIM engine and accelerated.
+This fine-grained approach can have significant benefits in terms of potential adoption 
+since existing processor-centric execution models already operate (i.e., perform computation) 
+at the granularity of individual instructions and all such machinery
+can be reused to aid offloading to be as seamless as
+possible with existing programming models and system
+mechanisms. 
 
-\subsubsection{PIM Directory}
-PIM Directory ensures atmoicity among different in-flight PEIs. Atomicity
-between a PEI and normal memory instruction is not maintained by PIM Directory.
-This must be maintained by the programmer by using pfence. 
-PIM Directory is a directly mapped, tag-less table indexed by XOR-folded addresses of 
-target cache blocks. Each entry implements a reader-writer pair lock 
-
-
-\subsubsection{Cache Coherancy Management}
-Since the PEIs are resisted to a single last-level cache block, the cache
-coherency problem is simplified. Whenever the PEI is executed on the host
-processor the correspoinding last level block is flushed out and subsequent
-blocks in L1 and L2 are back-invalidated. Thus ensuring neither the memory nor
-the processor has a stale copy of data.
-
-\subsubsection{Locality Monitor}
-The key idea behind locality monitor is to decide whether to execute the PEI
-locally on the host or remotely in the memory. Locality monitor is a taf array
-with same number of sets/ways as that of the last-level cache. The key
-difference between the locality monitor and the tag array fo the last-level
-cache is that the formeris also updated when a PIM operation is issued to
-memory. In our locality monitor, the data locality of a PEI can be
-identified by checking to see if its target cache block address
-hits in the locality monitor.
-
-\subsection{PEI execution}
-\subsubsection{Host-side PEI execution}
-\begin{enumerate}
-  \setlength\itemsep{0em}
-  \item The out-of-order core writes the input operands to the memory-mapped
-    registers of the PCU and issues the PEI
-  \item PIM Directory then checks for atomicity and data locality - which
-    results in high locality of data indicating host-side execution
-  \item The PCU loads the block from cache and executes the instruction
-  \item After execution the PCU writes back the output operands in the cache
-    and notifies the PMU for completion
-  \item The out-of-order core then reads the output operands using the
-    memory-mapped registers of PCU.
-\end{enumerate}
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.8\linewidth]{host.png}
-  \caption{Host-side PEI execution}
-\end{figure}
-
-\subsubsection{Memory-side PEI execution}
-\begin{enumerate}
-  \setlength\itemsep{0em}
-  \item The out-of-order core writes the input operands to the memory-mapped
-    registers of the PCU and issues the PEI
-  \item PIM Directory then checks for atomicity and data locality - which
-    results in low locality of data indicating memory-side execution
-  \item The Last-level block in cache is flushed and the corresponding blocks
-    in L1 and L2 are back-invalidated
-  \item The host side PCU sends the input operands to the memory side PCU using
-    the HMC controller
-  \item The PCU executes the operation and sends back the output operands 
-    indicating completion
-  \item The out-of-order core then reads the output operands using the
-    memory-mapped registers of PCU.
-\end{enumerate}
-
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.8\linewidth]{memory.png}
-  \caption{Memory-side PEI execution.}
-\end{figure}
+PIM-Enabled Instructions (PEI)\cite{PEI_ISCA} aims to provide the minimal processing-in-memory 
+support to take advantage of PIM using 3D-stacked memory, in
+a way that can achieve significant performance and energy benefits without changing the 
+computing system significantly. PEI incorporated a locality-aware mechanism
+which tracked the locality of operand and dynamically decides where to execute
+the instruction. Examples of PEIs are integer increment, integer minimum, floating-point 
+addition, hash table probing, histogram bin index, Euclidean distance, and dot
+product. The instructions were tailored to accelarated the application but were distinct 
+from the host ISA. This affects significantly in the adoption of PIM for general
+purpose processing. Data locality is a great parameter for deciding the
+location of execution (host CPU or memory), but is not sufficient. In case the
+instruction was executed on the host CPU and one operand from memory, the feteched operand
+from memory may not be referenced again and pollutes the cache with unnecessary data movement.
 
 
+\subsection{Effects of Instruction-level offload}
+%All of the above mentioned methods take deceision based on past access with no
+%consideration of future. 
+In case of PEIs the decision of fetching an operand
+from memory can result in pollution of cache. Thus we propose to take decide
+the location of execution by considering the affter-effects of fetching operand from
+memory / flushing the cacheline from host. Thus we predict the reuse distance
+of the cacheline in which the operand resides.  
 
-\subsection{Results}
-\begin{itemize}
-  \setlength\itemsep{0em}
-  \item For large inputs, PIM-Only achieves 44\% speedup over Ideal-Host since using PIM 
-    operations better utilizes the vertical DRAM bandwidth inside HMCs
-  \item For small inputs, PIM-Only degrades average performance by 20\% because PIM 
-    operations always access DRAM even though the data set comfortably fits in on-chip 
-    caches
-  \item Locality-Aware system provides the speedup of PIM-Only in workloads with large
-inputs (47\% improvement over Host-Only) by offloading 79\% of PEIs to memory-side PCUs.
-  \item Locality-Aware system provides the speedup of PIM-Only in workloads
-    with small inputs (32\% improvement over Host-Only) by offloading 86\% of PEIs to 
-    memory-side PCUs.
-  \item Locality-Aware often outperforms both Host-Only and PIM-Only by simultaneously 
-    utilizing host-side and memory-side PCUs for PEI execution
-\end{itemize}
-\begin{figure}[h]
-  \centering
-  \includegraphics[width=0.7\linewidth]{results.png}
-  \caption{Speedup comparison under different input sizes.}
-\end{figure}
-
-\subsection{Conclusion}
-\begin{itemize}
-  \setlength\itemsep{0em}
-  \item PIM-enabled instructions (PEIs) is a practical model for processing-in-memory 
-    and its hardware implementation, which is compatible with existing cache coherence 
-    and virtual memory mechanisms
-  \item PEIS have a last-level cache block restriction to ensure atomicity. 
-  \item PEIs use data locality to decide the processing core.
-\end{itemize}
- 
-\chapter{Future Work}
-I plan to read the following conference papers -
-\begin{itemize}
-  \setlength\itemsep{0em}
-  \item A. Devic  et al., "To PIM or not for emerging general purpose processing in
-    DDR memory systems". In Proceedings of the 49th Annual International
-    Symposium on Computer Architecture (ISCA '22). Association for Computing
-    Machinery, New York, NY, USA, 231–244.
-  \item K. Hsieh et al., "Transparent Offloading and Mapping (TOM): Enabling Programmer-Transparent Near-Data Processing in GPU Systems," 2016 ACM/IEEE 43rd Annual International Symposium on Computer Architecture (ISCA), 2016, pp. 204-216,
- 
-\end{itemize}
+\chapter{Project Proposal}
+Instruction granularity does not affect the programmers model, and thus helps
+in the adoption of PIM for general purpose processing. We thus intend to
+accelarate X86 SIMD instructions which benefits from execution in PIM engines. For
+every operand that needs to be fetched from memory we predict its reuse
+distance. This prediction is very similar to mockingjay's\cite{mockingjay} Reuse Distance
+Predictor with the difference that the prediction is done for operands of
+potential PIM instruction instead of incoming cacheline. If the predicted reuse
+distance is greater than any of the reuse distance stored in our predictor, we
+mark the instruction an offloadable instruction as fetching the operand from
+main memory results in pollution of cacheline and does not help the CPU for further 
+operations. 
 
 \bibliographystyle{ieeetr}
 \bibliography{thesisTemplate}{}
